@@ -9,7 +9,7 @@ class TestNeutronConverter(unittest.TestCase):
     
     def test_energy_to_velocity(self):
         """Test energy to velocity conversion."""
-        energy = 0.025  # eV (thermal neutron)
+        energy = 25  # meV (thermal neutron)
         velocity = NeutronConverter.energy_to_velocity(energy)
         self.assertAlmostEqual(velocity, 2186.967, places=1)
     
@@ -17,7 +17,7 @@ class TestNeutronConverter(unittest.TestCase):
         """Test velocity to energy conversion."""
         velocity = 2187.928  # m/s
         energy = NeutronConverter.velocity_to_energy(velocity)
-        self.assertAlmostEqual(energy, 0.025, places=4)
+        self.assertAlmostEqual(energy, 25, places=1)
     
     def test_velocity_to_wavelength(self):
         """Test velocity to wavelength conversion."""
@@ -33,7 +33,7 @@ class TestNeutronConverter(unittest.TestCase):
     
     def test_energy_to_wavelength(self):
         """Test energy to wavelength conversion."""
-        energy = 0.025  # eV
+        energy = 25  # meV
         wavelength = NeutronConverter.energy_to_wavelength(energy)
         self.assertAlmostEqual(wavelength, 1.8064, places=2)
     
@@ -41,14 +41,14 @@ class TestNeutronConverter(unittest.TestCase):
         """Test wavelength to energy conversion."""
         wavelength = 1.8064  # Angstroms
         energy = NeutronConverter.wavelength_to_energy(wavelength)
-        self.assertAlmostEqual(energy, 0.02507, places=4)
+        self.assertAlmostEqual(energy, 25.07, places=1)
     
     def test_round_trip_energy(self):
         """Test round-trip conversion starting with energy."""
-        original_energy = 0.1  # eV
+        original_energy = 100  # meV
         velocity = NeutronConverter.energy_to_velocity(original_energy)
         recovered_energy = NeutronConverter.velocity_to_energy(velocity)
-        self.assertAlmostEqual(original_energy, recovered_energy, places=10)
+        self.assertAlmostEqual(original_energy, recovered_energy, places=5)
     
     def test_round_trip_velocity(self):
         """Test round-trip conversion starting with velocity."""
@@ -77,12 +77,12 @@ class TestFlaskAPI(unittest.TestCase):
         """Test energy to velocity endpoint."""
         response = self.client.post(
             '/convert/energy-to-velocity',
-            data=json.dumps({'energy': 0.025}),
+            data=json.dumps({'energy': 25}),
             content_type='application/json'
         )
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
-        self.assertEqual(data['energy_eV'], 0.025)
+        self.assertEqual(data['energy_meV'], 25)
         self.assertAlmostEqual(data['velocity_ms'], 2186.967, places=1)
     
     def test_velocity_to_energy_endpoint(self):
@@ -95,18 +95,18 @@ class TestFlaskAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertEqual(data['velocity_ms'], 2187.928)
-        self.assertAlmostEqual(data['energy_eV'], 0.025, places=4)
+        self.assertAlmostEqual(data['energy_meV'], 25, places=1)
     
     def test_full_conversion_energy(self):
         """Test full conversion endpoint with energy."""
         response = self.client.post(
             '/convert/full',
-            data=json.dumps({'energy': 0.025}),
+            data=json.dumps({'energy': 25}),
             content_type='application/json'
         )
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
-        self.assertEqual(data['energy_eV'], 0.025)
+        self.assertEqual(data['energy_meV'], 25)
         self.assertIn('velocity_ms', data)
         self.assertIn('wavelength_angstrom', data)
     
@@ -120,7 +120,7 @@ class TestFlaskAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertEqual(data['velocity_ms'], 2187.928)
-        self.assertIn('energy_eV', data)
+        self.assertIn('energy_meV', data)
         self.assertIn('wavelength_angstrom', data)
     
     def test_full_conversion_wavelength(self):
@@ -133,7 +133,7 @@ class TestFlaskAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertAlmostEqual(data['wavelength_angstrom'], 1.8064, places=4)
-        self.assertIn('energy_eV', data)
+        self.assertIn('energy_meV', data)
         self.assertIn('velocity_ms', data)
     
     def test_missing_parameter(self):

@@ -7,7 +7,7 @@ A RESTful Flask web application for converting between neutron energy, velocity,
 ## Features
 
 - 🎨 **Interactive Web Dashboard** - Beautiful, responsive UI for easy conversions
-- Convert between neutron energy (eV), velocity (m/s), and wavelength (Angstroms)
+- Convert between neutron energy (meV), velocity (m/s), and wavelength (Angstroms)
 - Six dedicated conversion endpoints for pairwise conversions
 - One comprehensive endpoint that converts to all three properties from any input
 - Input validation and error handling
@@ -54,12 +54,12 @@ Simply open your browser to `http://localhost:5000/` to access the interactive d
 ### Pairwise Conversions
 
 1. **POST** `/convert/energy-to-velocity`
-   - Input: `{"energy": 0.025}`
-   - Returns: `{"energy_eV": 0.025, "velocity_ms": 2187.928...}`
+   - Input: `{"energy": 25}`
+   - Returns: `{"energy_meV": 25, "velocity_ms": 2187.928...}`
 
 2. **POST** `/convert/velocity-to-energy`
    - Input: `{"velocity": 2187.928}`
-   - Returns: `{"velocity_ms": 2187.928, "energy_eV": 0.025}`
+   - Returns: `{"velocity_ms": 2187.928, "energy_meV": 25}`
 
 3. **POST** `/convert/velocity-to-wavelength`
    - Input: `{"velocity": 2187.928}`
@@ -70,8 +70,8 @@ Simply open your browser to `http://localhost:5000/` to access the interactive d
    - Returns: `{"wavelength_angstrom": 1.8064, "velocity_ms": 2187.928...}`
 
 5. **POST** `/convert/energy-to-wavelength`
-   - Input: `{"energy": 0.025}`
-   - Returns: `{"energy_eV": 0.025, "wavelength_angstrom": 1.8064...}`
+   - Input: `{"energy": 25}`
+   - Returns: `{"energy_meV": 25, "wavelength_angstrom": 1.8064...}`
 
 6. **POST** `/convert/wavelength-to-energy`
    - Input: `{"wavelength": 1.8064}`
@@ -80,11 +80,11 @@ Simply open your browser to `http://localhost:5000/` to access the interactive d
 ### Full Conversion (All Three Properties)
 
 - **POST** `/convert/full`
-  - Input (any one): `{"energy": 0.025}` or `{"velocity": 2187.928}` or `{"wavelength": 1.8064}`
+  - Input (any one): `{"energy": 25}` or `{"velocity": 2187.928}` or `{"wavelength": 1.8064}`
   - Returns all three:
     ```json
     {
-      "energy_eV": 0.025,
+      "energy_meV": 25,
       "velocity_ms": 2187.928,
       "wavelength_angstrom": 1.8064
     }
@@ -98,7 +98,7 @@ Using `curl`:
 # Convert energy to all properties
 curl -X POST http://localhost:5000/convert/full \
   -H "Content-Type: application/json" \
-  -d '{"energy": 0.025}'
+  -d '{"energy": 25}'
 
 # Convert wavelength to velocity
 curl -X POST http://localhost:5000/convert/wavelength-to-velocity \
@@ -113,7 +113,8 @@ import requests
 
 response = requests.post(
     'http://localhost:5000/convert/full',
-    json={'energy': 0.025}
+    json={'energy': 25}
+)
 )
 print(response.json())
 ```

@@ -12,18 +12,18 @@ class NeutronConverter:
     """Convert between neutron energy, velocity, and wavelength."""
     
     @staticmethod
-    def energy_to_velocity(energy_ev):
-        """Convert energy (eV) to velocity (m/s)."""
-        energy_joules = energy_ev * 1.602176634e-19  # Convert eV to Joules
+    def energy_to_velocity(energy_mev):
+        """Convert energy (meV) to velocity (m/s)."""
+        energy_joules = energy_mev * 1.602176634e-22  # Convert meV to Joules (1e-3 eV)
         velocity = math.sqrt(2 * energy_joules / NEUTRON_MASS)
         return velocity
     
     @staticmethod
     def velocity_to_energy(velocity_ms):
-        """Convert velocity (m/s) to energy (eV)."""
+        """Convert velocity (m/s) to energy (meV)."""
         kinetic_energy_joules = 0.5 * NEUTRON_MASS * velocity_ms ** 2
-        energy_ev = kinetic_energy_joules / 1.602176634e-19
-        return energy_ev
+        energy_mev = kinetic_energy_joules / 1.602176634e-22  # Convert Joules to meV
+        return energy_mev
     
     @staticmethod
     def velocity_to_wavelength(velocity_ms):
@@ -40,14 +40,14 @@ class NeutronConverter:
         return velocity
     
     @staticmethod
-    def energy_to_wavelength(energy_ev):
-        """Convert energy (eV) to wavelength (Angstroms)."""
-        velocity = NeutronConverter.energy_to_velocity(energy_ev)
+    def energy_to_wavelength(energy_mev):
+        """Convert energy (meV) to wavelength (Angstroms)."""
+        velocity = NeutronConverter.energy_to_velocity(energy_mev)
         return NeutronConverter.velocity_to_wavelength(velocity)
     
     @staticmethod
     def wavelength_to_energy(wavelength_angstrom):
-        """Convert wavelength (Angstroms) to energy (eV)."""
+        """Convert wavelength (Angstroms) to energy (meV)."""
         velocity = NeutronConverter.wavelength_to_velocity(wavelength_angstrom)
         return NeutronConverter.velocity_to_energy(velocity)
 
@@ -230,9 +230,9 @@ DASHBOARD_HTML = '''
             <div class="form-group">
                 <label for="energy">Energy</label>
                 <div class="input-group">
-                    <input type="number" id="energy" placeholder="e.g., 0.025" step="any">
+                    <input type="number" id="energy" placeholder="e.g., 25" step="any">
                     <select disabled>
-                        <option>eV</option>
+                        <option>meV</option>
                     </select>
                 </div>
             </div>
@@ -269,7 +269,7 @@ DASHBOARD_HTML = '''
         <div class="results" id="results">
             <div class="result-item">
                 <div class="result-label">Energy</div>
-                <div class="result-value"><span id="resultEnergy">-</span> eV</div>
+                <div class="result-value"><span id="resultEnergy">-</span> meV</div>
             </div>
             <div class="result-item">
                 <div class="result-label">Velocity</div>
@@ -387,7 +387,7 @@ def health():
 
 @app.route('/convert/energy-to-velocity', methods=['POST'])
 def energy_to_velocity():
-    """Convert energy (eV) to velocity (m/s)."""
+    """Convert energy (meV) to velocity (m/s)."""
     try:
         data = request.get_json()
         energy = data.get('energy')
@@ -400,7 +400,7 @@ def energy_to_velocity():
         
         velocity = NeutronConverter.energy_to_velocity(energy)
         return jsonify({
-            'energy_eV': energy,
+            'energy_meV': energy,
             'velocity_ms': velocity
         }), 200
     except Exception as e:
@@ -409,7 +409,7 @@ def energy_to_velocity():
 
 @app.route('/convert/velocity-to-energy', methods=['POST'])
 def velocity_to_energy():
-    """Convert velocity (m/s) to energy (eV)."""
+    """Convert velocity (m/s) to energy (meV)."""
     try:
         data = request.get_json()
         velocity = data.get('velocity')
@@ -423,7 +423,7 @@ def velocity_to_energy():
         energy = NeutronConverter.velocity_to_energy(velocity)
         return jsonify({
             'velocity_ms': velocity,
-            'energy_eV': energy
+            'energy_meV': energy
         }), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -475,7 +475,7 @@ def wavelength_to_velocity():
 
 @app.route('/convert/energy-to-wavelength', methods=['POST'])
 def energy_to_wavelength():
-    """Convert energy (eV) to wavelength (Angstroms)."""
+    """Convert energy (meV) to wavelength (Angstroms)."""
     try:
         data = request.get_json()
         energy = data.get('energy')
@@ -488,7 +488,7 @@ def energy_to_wavelength():
         
         wavelength = NeutronConverter.energy_to_wavelength(energy)
         return jsonify({
-            'energy_eV': energy,
+            'energy_meV': energy,
             'wavelength_angstrom': wavelength
         }), 200
     except Exception as e:
@@ -497,7 +497,7 @@ def energy_to_wavelength():
 
 @app.route('/convert/wavelength-to-energy', methods=['POST'])
 def wavelength_to_energy():
-    """Convert wavelength (Angstroms) to energy (eV)."""
+    """Convert wavelength (Angstroms) to energy (meV)."""
     try:
         data = request.get_json()
         wavelength = data.get('wavelength')
@@ -511,7 +511,7 @@ def wavelength_to_energy():
         energy = NeutronConverter.wavelength_to_energy(wavelength)
         return jsonify({
             'wavelength_angstrom': wavelength,
-            'energy_eV': energy
+            'energy_meV': energy
         }), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -536,7 +536,7 @@ def full_conversion():
         if energy is not None:
             if energy < 0:
                 return jsonify({'error': 'Energy must be non-negative'}), 400
-            result['energy_eV'] = energy
+            result['energy_meV'] = energy
             result['velocity_ms'] = NeutronConverter.energy_to_velocity(energy)
             result['wavelength_angstrom'] = NeutronConverter.energy_to_wavelength(energy)
         
@@ -544,7 +544,7 @@ def full_conversion():
             if velocity < 0:
                 return jsonify({'error': 'Velocity must be non-negative'}), 400
             result['velocity_ms'] = velocity
-            result['energy_eV'] = NeutronConverter.velocity_to_energy(velocity)
+            result['energy_meV'] = NeutronConverter.velocity_to_energy(velocity)
             result['wavelength_angstrom'] = NeutronConverter.velocity_to_wavelength(velocity)
         
         elif wavelength is not None:
@@ -552,7 +552,7 @@ def full_conversion():
                 return jsonify({'error': 'Wavelength must be positive'}), 400
             result['wavelength_angstrom'] = wavelength
             result['velocity_ms'] = NeutronConverter.wavelength_to_velocity(wavelength)
-            result['energy_eV'] = NeutronConverter.wavelength_to_energy(wavelength)
+            result['energy_meV'] = NeutronConverter.wavelength_to_energy(wavelength)
         
         return jsonify(result), 200
     except Exception as e:
