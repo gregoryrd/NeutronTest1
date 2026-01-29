@@ -1,5 +1,7 @@
 # Neutron Converter API
 
+[![CI](https://github.com/YOUR-USERNAME/NeutronTest1/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR-USERNAME/NeutronTest1/actions/workflows/ci.yml)
+
 A RESTful Flask web application for converting between neutron energy, velocity, and wavelength.
 
 ## Features
