@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template_string
 import math
 
 app = Flask(__name__)
@@ -50,6 +50,333 @@ class NeutronConverter:
         """Convert wavelength (Angstroms) to energy (eV)."""
         velocity = NeutronConverter.wavelength_to_velocity(wavelength_angstrom)
         return NeutronConverter.velocity_to_energy(velocity)
+
+
+# HTML Dashboard Template
+DASHBOARD_HTML = '''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neutron Converter</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        .input-group input {
+            flex: 1;
+        }
+        .input-group select {
+            flex: 0.4;
+        }
+        button {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            display: none;
+        }
+        .results.show {
+            display: block;
+        }
+        .result-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .result-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        .result-label {
+            color: #666;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .result-value {
+            color: #333;
+            font-size: 20px;
+            font-weight: 700;
+            margin-top: 5px;
+            font-family: 'Courier New', monospace;
+        }
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            display: none;
+            border-left: 4px solid #c33;
+        }
+        .error.show {
+            display: block;
+        }
+        .info {
+            background: #f0f4ff;
+            color: #667eea;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+            font-size: 13px;
+            line-height: 1.6;
+            border-left: 4px solid #667eea;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚛️ Neutron Converter</h1>
+        <p class="subtitle">Convert between energy, velocity, and wavelength</p>
+        
+        <div class="info">
+            Enter a value in any field and click Convert. Results will show all three properties.
+        </div>
+        
+        <form id="converterForm">
+            <div class="form-group">
+                <label for="energy">Energy</label>
+                <div class="input-group">
+                    <input type="number" id="energy" placeholder="e.g., 0.025" step="any">
+                    <select disabled>
+                        <option>eV</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="velocity">Velocity</label>
+                <div class="input-group">
+                    <input type="number" id="velocity" placeholder="e.g., 2187.9" step="any">
+                    <select disabled>
+                        <option>m/s</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="wavelength">Wavelength</label>
+                <div class="input-group">
+                    <input type="number" id="wavelength" placeholder="e.g., 1.8064" step="any">
+                    <select disabled>
+                        <option>Å</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button type="submit">Convert</button>
+        </form>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+        </div>
+        
+        <div class="error" id="error"></div>
+        
+        <div class="results" id="results">
+            <div class="result-item">
+                <div class="result-label">Energy</div>
+                <div class="result-value"><span id="resultEnergy">-</span> eV</div>
+            </div>
+            <div class="result-item">
+                <div class="result-label">Velocity</div>
+                <div class="result-value"><span id="resultVelocity">-</span> m/s</div>
+            </div>
+            <div class="result-item">
+                <div class="result-label">Wavelength</div>
+                <div class="result-value"><span id="resultWavelength">-</span> Å</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const form = document.getElementById('converterForm');
+        const energyInput = document.getElementById('energy');
+        const velocityInput = document.getElementById('velocity');
+        const wavelengthInput = document.getElementById('wavelength');
+        const resultsDiv = document.getElementById('results');
+        const errorDiv = document.getElementById('error');
+        const loading = document.getElementById('loading');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await convert();
+        });
+        
+        // Clear other inputs when one is focused
+        energyInput.addEventListener('input', () => {
+            velocityInput.value = '';
+            wavelengthInput.value = '';
+        });
+        velocityInput.addEventListener('input', () => {
+            energyInput.value = '';
+            wavelengthInput.value = '';
+        });
+        wavelengthInput.addEventListener('input', () => {
+            energyInput.value = '';
+            velocityInput.value = '';
+        });
+        
+        async function convert() {
+            const energy = energyInput.value;
+            const velocity = velocityInput.value;
+            const wavelength = wavelengthInput.value;
+            
+            if (!energy && !velocity && !wavelength) {
+                showError('Please enter a value');
+                return;
+            }
+            
+            loading.style.display = 'block';
+            errorDiv.classList.remove('show');
+            resultsDiv.classList.remove('show');
+            
+            try {
+                const endpoint = energy ? '/convert/full' : 
+                                velocity ? '/convert/full' : '/convert/full';
+                
+                const payload = energy ? {energy: parseFloat(energy)} :
+                               velocity ? {velocity: parseFloat(velocity)} :
+                               {wavelength: parseFloat(wavelength)};
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) {
+                    const data = await response.json();
+                    showError(data.error || 'Conversion failed');
+                    return;
+                }
+                
+                const data = await response.json();
+                displayResults(data);
+            } catch (err) {
+                showError('Network error: ' + err.message);
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+        
+        function displayResults(data) {
+            document.getElementById('resultEnergy').textContent = 
+                data.energy_eV.toFixed(6);
+            document.getElementById('resultVelocity').textContent = 
+                data.velocity_ms.toFixed(2);
+            document.getElementById('resultWavelength').textContent = 
+                data.wavelength_angstrom.toFixed(6);
+            resultsDiv.classList.add('show');
+        }
+        
+        function showError(message) {
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+        }
+    </script>
+</body>
+</html>
+'''
+
+
+@app.route('/', methods=['GET'])
+def dashboard():
+    """Serve the web dashboard."""
+    return render_template_string(DASHBOARD_HTML)
 
 
 @app.route('/health', methods=['GET'])

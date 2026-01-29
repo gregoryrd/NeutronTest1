@@ -4,6 +4,7 @@ A RESTful Flask web application for converting between neutron energy, velocity,
 
 ## Features
 
+- 🎨 **Interactive Web Dashboard** - Beautiful, responsive UI for easy conversions
 - Convert between neutron energy (eV), velocity (m/s), and wavelength (Angstroms)
 - Six dedicated conversion endpoints for pairwise conversions
 - One comprehensive endpoint that converts to all three properties from any input
@@ -37,7 +38,12 @@ Where:
 
 The server will start at `http://localhost:5000`
 
-## API Endpoints
+## Quick Start
+
+### Web Dashboard
+Simply open your browser to `http://localhost:5000/` to access the interactive dashboard. Enter any value and click "Convert" to see all three properties.
+
+### API Endpoints
 
 ### Health Check
 - **GET** `/health`
